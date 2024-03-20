@@ -1,0 +1,21 @@
+FROM adguard/adguardhome
+
+# Installer OpenSSH Server en utilisant apk
+RUN apk --no-cache add openssh-server sudo && \
+    mkdir /var/run/sshd
+
+# Ajouter un nouvel utilisateur pour SSH (nommé 'adguard' ici)
+RUN adduser -D -s /bin/bash adguard && \
+    echo "adguard:adguard" | chpasswd && \
+    adduser adguard wheel
+
+# Permettre aux membres du groupe wheel d'exécuter des commandes sudo
+RUN echo '%wheel ALL=(ALL) ALL' > /etc/sudoers.d/wheel
+
+# Configurer SSH pour accepter les connexions
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+EXPOSE 22
+
+CMD ["/usr/sbin/sshd", "-D"]
